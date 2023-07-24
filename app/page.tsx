@@ -5,6 +5,7 @@ import styles from './page.module.css';
 
 import { initializeApp } from "firebase/app";
 import { GoogleAuthProvider, User, browserLocalPersistence, getAuth, setPersistence, signInWithPopup, signInWithRedirect } from 'firebase/auth';
+import { useState } from 'react';
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -19,28 +20,35 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
+const signInWithGooglePopup = async (): Promise<User | false> => {
+  try {
+    const provider = new GoogleAuthProvider();
+    await setPersistence(auth, browserLocalPersistence);
+    const result = await signInWithPopup(auth, provider);
+    return result.user;
+  } catch (error) {
+    console.error('Error signing in with Google:', error);
+    return false;
+  }
+};
+
 export default function Home() {
 
-  const signInWithGooglePopup = async (): Promise<User | string> => {
-    try {
-      const provider = new GoogleAuthProvider();
-      await setPersistence(auth, browserLocalPersistence);
-      const result = await signInWithPopup(auth, provider);
-      return result.user;
-    } catch (error) {
-      console.error('Error signing in with Google:', error);
-      return "Login Failed";
-    }
-  };
+  const [user, setUser] = useState<User>();
+
+  const signIn = async () => {
+    const res = await signInWithGooglePopup();
+    res && setUser(res);
+  }
 
   return (
     <main className={styles.main}>
       <Head>
-        <title>Hello World</title>
+        <title>Hello there.</title>
       </Head>
-      <h1>Hello there.</h1>
+      <h1>Hello {user? user.displayName : "there."}</h1>
 
-      <button onClick={signInWithGooglePopup}>Sign in with popup</button>
+      <button onClick={signIn}>Sign in with popup</button>
     </main>
   )
 }
